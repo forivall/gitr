@@ -24,9 +24,18 @@ class GitR
       cb()
 
   do: (cmd...) =>
+    args = {}
+    while (cmd[0] or '').substring(0,6) is '--gitr'
+      arg = cmd.shift()
+      [k, v] = arg.substring(7).split('=')
+      args[k] = v
+    console.log args
     fns = []
+    filter = args.filter? and new RegExp(args.filter)
     repos = findRepos()
-    _.each repos, (repo) => fns.push (cb) => exec cmd, repo, cb
+    _.each repos, (repo) =>
+      if not filter or filter.test(repo)
+        fns.push (cb) => exec cmd, repo, cb
     q.dequeue fns, =>
     log "#{color.red}no git repos under #{color.yellow}#{process.cwd()}#{color.cls}" if repos.length == 0
 
